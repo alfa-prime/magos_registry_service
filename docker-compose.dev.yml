@@ -1,0 +1,17 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: ${DEV_CONTAINER_NAME}
+    ports:
+      - "${DEV_PORT}:8000"
+    environment:
+      - TZ=Europe/Moscow
+    env_file:
+      - .env
+    volumes:
+      - ./app:/code/app
+      - ./logs:/code/logs
+    restart: no

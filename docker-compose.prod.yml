@@ -1,0 +1,12 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: docker-files/Dockerfile.app
+      target: production
+    container_name: ${PROD_CONTAINER_NAME}
+    ports:
+      - "${PROD_PORT}:8000"
+    env_file:
+      - .env
+    restart: always
