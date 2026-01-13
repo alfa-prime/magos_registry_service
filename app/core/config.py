@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     GATEWAY_URL: str
     GATEWAY_JSON_REQUEST_ENDPOINT: str = "/gateway/request"
     GATEWAY_HTML_REQUEST_ENDPOINT: str = "/gateway/html"
+    GATEWAY_SESSION_ID: str
     REQUEST_TIMEOUT: float = 30.0
 
     LOGS_LEVEL: str = "INFO"

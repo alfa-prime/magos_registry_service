@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker-files/Dockerfile.app
       target: development
     container_name: ${DEV_CONTAINER_NAME}
     ports:

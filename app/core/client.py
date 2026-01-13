@@ -12,7 +12,7 @@ async def init_gateway_client(app: FastAPI):
         base_url=settings.GATEWAY_URL,
         headers={
             "X-API-KEY": settings.GATEWAY_API_KEY,
-            "X-Session-ID": "arm-clinic-registrator",
+            "X-Session-ID": settings.GATEWAY_SESSION_ID,
         },
         timeout=settings.REQUEST_TIMEOUT,
     )
