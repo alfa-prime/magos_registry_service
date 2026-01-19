@@ -7,3 +7,4 @@ docker-compose.*
 docker-files/
 Dockerfile*
 README.md
+temp
