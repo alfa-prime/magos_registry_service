@@ -27,6 +27,7 @@ class PatientFoundItem(BaseModel):
     attach_lpu_name: Optional[str] = None
     lpu_region_name: Optional[str] = None
 
+    ambulat_card_number: Optional[str] = None
     person_id: str
     person_card_id: Optional[str] = None
     server_id: Optional[str] = None

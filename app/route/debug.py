@@ -14,10 +14,10 @@ router = APIRouter(prefix="/debug", tags=["Debug"])
 @router.post("/timetable", summary="Полная выгрузка расписания")
 async def get_full_timetable(
         gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
-        payload: TimetableRequest = Body(..., example={
+        payload: TimetableRequest = Body(..., examples=[{
             "Person_id": "3010101001541772",
             "StartDay": "12.01.2026"
-        })
+        }])
 ) -> Dict[str, Any]:
     results = await fetch_full_timetable_loop(gateway_service, payload)
 
@@ -46,14 +46,14 @@ def _clean_html_field(raw_html: str | None) -> str | None:
 )
 async def patient_search(
         gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
-        payload: PatientRequest = Body(..., example={
+        payload: PatientRequest = Body(..., examples=[{
             "last_name": "жулидова",
             "first_name": "елена",
             "middle_name": "вячеславовна",
             "birthday": "08.08.1972"
-        })
+        }])
 ):
-    logger.info("Star search patient")
+    logger.info("Start search patient")
     logger.debug(payload)
 
     response = await gateway_service.request_json(
@@ -81,7 +81,6 @@ async def patient_search(
     )
 
     raw_patients = response.get("data", []) or []
-    total_count = response.get("totalCount", 0)
 
     result_items = []
 
@@ -113,12 +112,8 @@ async def patient_search(
             server_id=str(patient.get("Server_id")),
             person_env_id=str(patient.get("PersonEvn_id")),
             attach_lpu_id=str(patient.get("AttachLpu_id"))
-            )
+        )
 
         result_items.append(record)
 
-    return PatientSearchResponse(
-        status="success",
-        total=total_count,
-        data=result_items
-    )
+    return result_items

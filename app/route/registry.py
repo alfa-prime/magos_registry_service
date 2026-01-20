@@ -24,12 +24,12 @@ def _clean_html_field(raw_html: str | None) -> str | None:
 )
 async def patient_search(
         gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
-        payload: PatientRequest = Body(..., example={
+        payload: PatientRequest = Body(..., examples=[{
             "last_name": "жулидова",
             "first_name": "елена",
             "middle_name": "вячеславовна",
             "birthday": "08.08.1972"
-        })
+        }])
 ):
     logger.info("Start search patient")
     logger.debug(payload)
@@ -85,6 +85,7 @@ async def patient_search(
             address_residential=patient.get("Person_UAddress") or None,
             attach_lpu_name=patient.get("AttachLpu_Name"),
             lpu_region_name=patient.get("LpuRegion_Name"),
+            ambulat_card_number = patient.get("PersonAmbulatCard_Num") or None,
             person_id=str(patient.get("Person_id")),
             person_card_id=str(patient.get("PersonCard_id")) if patient.get("PersonCard_id") else None,
             server_id=str(patient.get("Server_id")),
