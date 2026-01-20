@@ -1,9 +1,14 @@
 from typing import Annotated
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Body
 
 from app.core import check_api_key, get_gateway_service
-from app.model import PayTypeResponse
+from app.model import (
+    PayTypeResponse,
+    MedServiceGroupResponse,
+    MedServiceListRequest,
+    MedServiceItemResponse
+)
 from app.service import GatewayService
 
 router = APIRouter(
@@ -11,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.get(
+@router.post(
     path="/pay_type",
     response_model=list[PayTypeResponse],
     summary="Типы оплаты",
@@ -34,3 +39,86 @@ async def get_pay_type(
     )
 
     return response
+
+
+@router.post(
+    path="/med_service_groups",
+    response_model=list[MedServiceGroupResponse],
+    summary="Справочник групп услуг.",
+    description="Справочник групп услуг. Возвращает список групп услуг (наименование группы и id)",
+)
+async def get_med_service_groups(
+        gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+):
+    response = await gateway_service.request_json(
+        json={
+            "params": {
+                "c": "Reg",
+                "m": "getDirectionMedServiceList"
+            },
+            "data": {
+                "object": "MedService",
+                "start": "0",
+                "limit": "100",
+                "Filter_Lpu_Nick": "ФГБУЗ ММЦ им. Н.И. Пирогова ФМБА России",
+                "Filter_includeDopProfiles": "0",
+                "ARMType": "regpol6",
+                "FormName": "swDirectionMasterWindow",
+                "DirType_Code": "9",
+                "DirType_id": "10",
+                "LpuUnitLevel": "1",
+                "ListForDirection": "1",
+                "isAutoAPLCovid": "0",
+                "isSecondRead": "false",
+                "isOnlyPolka": "0",
+                "groupByMedService": "1",
+
+            }
+        }
+    )
+    return response
+
+
+@router.post(
+    path="/med_service_group_list",
+    response_model=list[MedServiceItemResponse],
+    summary="Справочник списка услуг в определенной группе",
+    description="Справочник списка услуг в определенной группе. Возвращает список услуг (наименование и ids).",
+)
+async def get_med_service_list(
+        gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+        payload: MedServiceListRequest = Body(..., examples=[{"group_id": "3010101000006230"}]),
+):
+    response = await gateway_service.request_json(
+        json={
+            "params": {
+                "c": "Reg",
+                "m": "getDirectionMedServiceList"
+            },
+            "data": {
+                "MedService_id": payload.group_id,
+                "object": "MedService",
+                "start": "0",
+                "limit": "100",
+                "Filter_Lpu_Nick": "ФГБУЗ ММЦ им. Н.И. Пирогова ФМБА России",
+                "Filter_includeDopProfiles": "0",
+                "ARMType": "regpol6",
+                "FormName": "swDirectionMasterWindow",
+                "DirType_Code": "9",
+                "DirType_id": "10",
+                "LpuUnitLevel": "1",
+                "ListForDirection": "1",
+                "isAutoAPLCovid": "0",
+                "isSecondRead": "false",
+                "isOnlyPolka": "0",
+                "groupByMedService": "1",
+            }
+        }
+    )
+
+    raw_data = response if isinstance(response, list) else response.get("data", [])
+
+    for item in raw_data:
+        item["group_id"] = payload.group_id
+
+    return raw_data

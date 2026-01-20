@@ -1,0 +1,26 @@
+from typing import Optional
+from pydantic import BaseModel, Field
+
+
+class MedServiceListRequest(BaseModel):
+    """ Модель запроса для получения списка услуг в группе """
+    group_id: str = Field(..., description="ID группы услуг (MedService_id)")
+
+
+class MedServiceGroupResponse(BaseModel):
+    """ Модель для ответа на запрос справочника услуг (группы) """
+    name: str = Field(validation_alias="MedService_Name")
+    id: str = Field(validation_alias="MedService_id")
+
+
+class MedServiceItemResponse(BaseModel):
+    """ Модель для ответа на запрос списка услуг в группе """
+    usluga_complex_name: Optional[str] = Field(None, validation_alias="UslugaComplex_Name")
+    group_id: str = Field(description="ID родительской группы")
+    med_service_id: str = Field(validation_alias="MedService_id")
+    med_service_type_id: Optional[str] = Field(None, validation_alias="MedServiceType_id")
+    usluga_complex_id: Optional[str] = Field(None, validation_alias="UslugaComplex_id")
+    usluga_complex_med_service_id: Optional[str] = Field(None, validation_alias="UslugaComplexMedService_id")
+    lpu_unit_id: Optional[str] = Field(None, validation_alias="LpuUnit_id")
+    lpu_section_id: Optional[str] = Field(None, validation_alias="LpuSection_id")
+    lpu_section_profile_id: Optional[str] = Field(None, validation_alias="LpuSectionProfile_id")

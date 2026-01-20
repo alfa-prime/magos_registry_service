@@ -6,6 +6,11 @@ from .patinet import (
     PatientSearchResponse
 )
 from .paytype import PayTypeResponse
+from .med_service import (
+    MedServiceGroupResponse,
+    MedServiceListRequest,
+    MedServiceItemResponse
+)
 
 __all__ = [
     "GatewayRequest",
@@ -13,5 +18,8 @@ __all__ = [
     "PatientRequest",
     "PatientFoundItem",
     "PatientSearchResponse",
-    "PayTypeResponse"
+    "PayTypeResponse",
+    "MedServiceGroupResponse",
+    "MedServiceListRequest",
+    "MedServiceItemResponse",
 ]
