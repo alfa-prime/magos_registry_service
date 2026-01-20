@@ -5,6 +5,7 @@ from .patinet import (
     PatientFoundItem,
     PatientSearchResponse
 )
+from .paytype import PayTypeResponse
 
 __all__ = [
     "GatewayRequest",
@@ -12,4 +13,5 @@ __all__ = [
     "PatientRequest",
     "PatientFoundItem",
     "PatientSearchResponse",
+    "PayTypeResponse"
 ]
