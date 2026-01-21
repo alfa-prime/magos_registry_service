@@ -1,5 +1,5 @@
 from .gateway_request import GatewayRequest
-from .timetable_request import TimetableRequest
+from .timetable import TimetableRequest
 from .patinet import (
     PatientRequest,
     PatientFoundItem,

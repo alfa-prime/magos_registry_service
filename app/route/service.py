@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Body
 
@@ -7,9 +7,9 @@ from app.model import (
     PayTypeResponse,
     MedServiceGroupResponse,
     MedServiceListRequest,
-    MedServiceItemResponse
+    MedServiceItemResponse, TimetableRequest
 )
-from app.service import GatewayService
+from app.service import GatewayService, fetch_full_timetable_loop
 
 router = APIRouter(
     prefix="/service", tags=["Сервисные ручки"], dependencies=[Depends(check_api_key)]
@@ -122,3 +122,27 @@ async def get_med_service_list(
         item["group_id"] = payload.group_id
 
     return raw_data
+
+
+@router.post(
+    path="/timetable",
+    summary="Получение расписания для услуги"
+)
+async def get_full_timetable(
+        gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+        payload: TimetableRequest = Body(..., examples=[{
+            "Resource_id": "3010101000001297",  # from service/med_service_group_list
+            "UslugaComplexMedService_id": "3010101000045588"  # from service/med_service_group_list
+        }])
+) -> dict[str, Any]:
+    results = await fetch_full_timetable_loop(gateway_service, payload)
+
+    # Считаем общее количество слотов для статистики
+    total_slots = sum(len(day_slots) for day_slots in results.values())
+
+    return {
+        "status": "success",
+        "total_days": len(results),
+        "total_slots": total_slots,
+        "data": results
+    }

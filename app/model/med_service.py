@@ -16,11 +16,15 @@ class MedServiceGroupResponse(BaseModel):
 class MedServiceItemResponse(BaseModel):
     """ Модель для ответа на запрос списка услуг в группе """
     usluga_complex_name: Optional[str] = Field(None, validation_alias="UslugaComplex_Name")
-    group_id: str = Field(description="ID родительской группы")
-    med_service_id: str = Field(validation_alias="MedService_id")
+    usluga_complex_code: Optional[str] = Field(None, validation_alias="UslugaComplex_Code")
+    group_id: Optional[str] = Field(None, description="ID родительской группы")
+    unique_key_id: Optional[str] = Field(None, validation_alias="UniqueKey_id")
+    med_service_id: Optional[str] = Field(None, validation_alias="MedService_id")
     med_service_type_id: Optional[str] = Field(None, validation_alias="MedServiceType_id")
     usluga_complex_id: Optional[str] = Field(None, validation_alias="UslugaComplex_id")
     usluga_complex_med_service_id: Optional[str] = Field(None, validation_alias="UslugaComplexMedService_id")
+    usluga_complex_resource_id: Optional[str] = Field(None, validation_alias="UslugaComplexResource_id")
+    resource_id: Optional[str] = Field(None, validation_alias="Resource_id")
     lpu_unit_id: Optional[str] = Field(None, validation_alias="LpuUnit_id")
     lpu_section_id: Optional[str] = Field(None, validation_alias="LpuSection_id")
     lpu_section_profile_id: Optional[str] = Field(None, validation_alias="LpuSectionProfile_id")

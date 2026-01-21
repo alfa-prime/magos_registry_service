@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from typing import List, Dict
 from collections import defaultdict
 
 from app.core import logger
@@ -9,7 +8,7 @@ from app.model.gateway_request import GatewayRequest
 from app.service import parse_timetable_html
 
 
-def _group_and_sort_slots(flat_slots: List[Dict]) -> Dict[str, List[Dict]]:
+def _group_and_sort_slots(flat_slots: list[dict]) -> dict[str, list[dict]]:
     """
     Группирует слоты по датам, сортирует даты по хронологии,
     а внутри дат сортирует слоты по времени.
@@ -35,14 +34,11 @@ def _group_and_sort_slots(flat_slots: List[Dict]) -> Dict[str, List[Dict]]:
     return result
 
 
-async def fetch_full_timetable_loop(
-        service: GatewayService,
-        payload: TimetableRequest
-) -> Dict[str, List[Dict]]:
+async def fetch_full_timetable_loop(service: GatewayService, payload: TimetableRequest) -> dict[str, list[dict]]:
     all_slots = []
     current_start_date_str = payload.start_day
 
-    MAX_ITERATIONS = 10
+    MAX_ITERATIONS = 10 # noqa
     iteration = 0
 
     logger.info(f"[TIMETABLE] Старт выгрузки с: {current_start_date_str}")
@@ -72,7 +68,6 @@ async def fetch_full_timetable_loop(
 
         logger.debug(f"[TIMETABLE] Итерация {iteration}: найдено слотов: {len(slots)}")
 
-        # --- ИСПРАВЛЕНИЕ ТУТ ---
         # Если ЕВМИАС вернул сетку, но в ней нет ни одного слота (free или busy),
         # значит мы ушли за пределы реального расписания.
         if not slots:
