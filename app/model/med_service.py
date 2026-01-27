@@ -2,25 +2,29 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
-class MedServiceListRequest(BaseModel):
-    """ Модель запроса для получения списка услуг в группе """
+class ResearchListRequest(BaseModel):
+    """ Модель запроса для получения списка исследований в службе """
     group_id: str = Field(..., description="ID группы услуг (MedService_id)")
 
 
-class MedServiceGroupResponse(BaseModel):
+class MedServiceListResponse(BaseModel):
     """ Модель для ответа на запрос справочника услуг (группы) """
     name: str = Field(validation_alias="MedService_Name")
     id: str = Field(validation_alias="MedService_id")
 
 
-class MedServiceItemResponse(BaseModel):
+class ResearchListItemResponse(BaseModel):
     """ Модель для ответа на запрос списка услуг в группе """
     usluga_complex_name: Optional[str] = Field(None, validation_alias="UslugaComplex_Name")
     usluga_complex_code: Optional[str] = Field(None, validation_alias="UslugaComplex_Code")
     group_id: Optional[str] = Field(None, description="ID родительской группы")
     unique_key_id: Optional[str] = Field(None, validation_alias="UniqueKey_id")
+    med_service_caption: Optional[str] = Field(None, validation_alias="MedService_Caption")
+    med_service_name: Optional[str] = Field(None, validation_alias="MedService_Name")
+    med_service_nick: Optional[str] = Field(None, validation_alias="MedService_Nick")
     med_service_id: Optional[str] = Field(None, validation_alias="MedService_id")
     med_service_type_id: Optional[str] = Field(None, validation_alias="MedServiceType_id")
+    med_service_type_sys_nick: Optional[str] = Field(None, validation_alias="MedServiceType_SysNick")
     usluga_complex_id: Optional[str] = Field(None, validation_alias="UslugaComplex_id")
     usluga_complex_med_service_id: Optional[str] = Field(None, validation_alias="UslugaComplexMedService_id")
     usluga_complex_resource_id: Optional[str] = Field(None, validation_alias="UslugaComplexResource_id")
