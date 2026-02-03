@@ -55,9 +55,7 @@ def _sanitize_response(patients_raw_list: list) -> list:
     return result
 
 
-async def fetch_patients_list(
-    gateway_service: GatewayService, payload: PatientRequest
-):
+async def fetch_patients_list(gateway_service: GatewayService, payload: PatientRequest):
     logger.info("Start search patient")
     logger.debug(payload)
 
@@ -77,9 +75,7 @@ async def fetch_patients_list(
         "page": "1",
     }
 
-    response = await gateway_service.request_json(
-        json={"params": params, "data": data}
-    )
+    response = await gateway_service.request_json(json={"params": params, "data": data})
 
     patients_raw_list = response.get("data", []) or []
     patients_pure_list = _sanitize_response(patients_raw_list)

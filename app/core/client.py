@@ -17,9 +17,7 @@ async def init_gateway_client(app: FastAPI):
         timeout=settings.REQUEST_TIMEOUT,
     )
     app.state.gateway_client = gateway_client
-    logger.info(
-        f"Gateway client initialized for base_url: {settings.GATEWAY_URL}"
-    )
+    logger.info(f"Gateway client initialized for base_url: {settings.GATEWAY_URL}")
 
 
 async def shutdown_gateway_client(app: FastAPI):

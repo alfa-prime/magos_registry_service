@@ -2,9 +2,7 @@ from app.model import ResearchListRequest
 from app.service import GatewayService
 
 
-async def fetch_research_list(
-    service: GatewayService, payload: ResearchListRequest
-):
+async def fetch_research_list(service: GatewayService, payload: ResearchListRequest):
     json = {
         "params": {"c": "Reg", "m": "getDirectionMedServiceList"},
         "data": {

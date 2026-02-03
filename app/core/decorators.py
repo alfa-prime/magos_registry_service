@@ -55,9 +55,7 @@ def log_and_catch(
                         for k, v in kwargs.items()
                         if k != "http_service" and k != "cookies"
                     }
-                )[
-                    :500
-                ]  # Исключаем большие объекты
+                )[:500]  # Исключаем большие объекты
                 if args_preview:
                     logger.debug(f"{log_prefix} Args: {args_preview}...")
 
@@ -84,9 +82,7 @@ def log_and_catch(
                             )
                             for k, v in kwargs["cookies"].items()
                         }
-                        logger.debug(
-                            f"{log_prefix} Cookies: {cookies_preview}"
-                        )
+                        logger.debug(f"{log_prefix} Cookies: {cookies_preview}")
 
             # Засекаем время выполнения
             start_time = time.perf_counter()
@@ -135,9 +131,7 @@ def log_and_catch(
                         # Другие типы
                         else:
                             preview = str(result)[:500]
-                            log_msg += (
-                                f"{type(result).__name__} Preview: {preview}"
-                            )
+                            log_msg += f"{type(result).__name__} Preview: {preview}"
 
                             if len(str(result)) > 500:
                                 log_msg += "..."
@@ -189,8 +183,7 @@ def log_and_catch(
                     )
                     if debug:
                         logger.debug(
-                            "Трейс:\n"
-                            + "".join(traceback.format_tb(e.__traceback__))
+                            "Трейс:\n" + "".join(traceback.format_tb(e.__traceback__))
                         )
 
                 # Пробрасываем ошибку как HTTPException
@@ -249,9 +242,7 @@ def route_handler(
             # Извлекаем данные запроса или используем заглушки
             request = kwargs.get("request", None)
             func_name = func.__name__
-            route_path = (
-                request.url.path if isinstance(request, Request) else func_name
-            )
+            route_path = request.url.path if isinstance(request, Request) else func_name
             method = request.method if isinstance(request, Request) else "N/A"
             # Логирование перед выполнением роута
             if debug:

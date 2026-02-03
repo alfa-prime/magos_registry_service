@@ -1,4 +1,5 @@
-from typing import Annotated
+import asyncio
+from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Body
 
 from app.core import check_api_key, get_gateway_service
@@ -6,11 +7,15 @@ from app.model import (
     MedServiceListResponse,
     ResearchListRequest,
     ResearchListItemResponse,
+    LabComplexResponse,
+    LabComplexRequest,
 )
 from app.service import (
     GatewayService,
     fetch_med_service_list,
     fetch_research_list,
+    fetch_collection_point_list,
+    fetch_complex_service_list,
 )
 
 router = APIRouter(
@@ -66,61 +71,36 @@ async def get_research_groups_list(
     return await fetch_research_list(gateway_service, payload)
 
 
-# ШАГ 3. Получение расписания
+@router.post(
+    path="/lab_complex_details",
+    response_model=LabComplexResponse,
+    summary="Список исследований в лабораторной услуге + список пунктов забора биоматериалов",
+    description="Возвращает список пунктов забора биоматериалов 'collection_points' и список исследований 'services_in_service'.",
+)
+async def get_lab_complex_details(
+    gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+    payload: LabComplexRequest = Body(
+        ...,
+        openapi_examples={
+            "Биохимия": {
+                "summary": "Пример: Биохимия ММЦ",
+                "value": {
+                    "med_service_id": "3010101000006800",
+                    "usluga_complex_id": "206894",
+                    "usluga_complex_med_service_id": "3010101000053307",
+                },
+            }
+        },
+    ),
+) -> Any:
+    collection_points_task = fetch_collection_point_list(gateway_service, payload)
+    complex_services_task = fetch_complex_service_list(gateway_service, payload)
 
+    collection_points_data, complex_services_data = await asyncio.gather(
+        collection_points_task, complex_services_task
+    )
 
-# ШАГ 3. Получаем список исследований в услуге
-# @router.post("/research_group")
-# async def get_research_group(
-#     gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
-#     payload: ResearchGroupRequest,
-# ):
-#     request_data = {
-#         "Lpu_uid": "13102423",
-#         "medServiceComplexOnly": "1",
-#         "level": "0",
-#         "MedService_id": payload.med_service_id,
-#     }
-#
-#     if payload.resource_id:
-#         request_data["Resource_id"] = payload.resource_id
-#
-#     response = await gateway_service.request_json(
-#         json={
-#             "params": {"c": "Usluga", "m": "loadUslugaComplexList"},
-#             "data": request_data,
-#         }
-#     )
-#     return response
-
-
-# @router.post(
-#     path="/med_service_complex_list",
-#     # response_model=list[MedServiceItemResponse],
-#     summary="Справочник списка услуг в определенной группе",
-#     description="Справочник списка услуг в определенной группе. Возвращает список услуг (наименование и ids)."
-# )
-
-
-# @router.post(
-#     path="/timetable",
-#     summary="Получение расписания для услуги"
-# )
-# async def get_full_timetable(
-#         gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
-#         payload: TimetableRequest = Body(..., examples=[{
-#             "Resource_id": "3010101000001297",  # from service/med_service_group_list
-#             "UslugaComplexMedService_id": "3010101000045588"  # from service/med_service_group_list
-#         }])
-# ) -> dict[str, Any]:
-#     results = await fetch_full_timetable_loop(gateway_service, payload)
-#
-#     # Считаем общее количество слотов для статистики
-#     total_slots = sum(len(day_slots) for day_slots in results.values())
-#
-#     return {
-#         "status": "success",
-#         "total_days": len(results),
-#         "total_slots": total_slots,
-#         "data": results
-#     }
+    return {
+        "collection_points": collection_points_data,
+        "services_in_service": complex_services_data,
+    }

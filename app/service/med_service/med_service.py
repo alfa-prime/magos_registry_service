@@ -62,7 +62,5 @@ async def fetch_med_service_list(service: GatewayService):
     }
     response = await service.request_json(json=payload)
     return [
-        item
-        for item in response
-        if item.get("MedService_Name") not in EXCLUDE_SERVICE
+        item for item in response if item.get("MedService_Name") not in EXCLUDE_SERVICE
     ]

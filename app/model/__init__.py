@@ -12,7 +12,7 @@ from .med_service import (
     ResearchListItemResponse,
 )
 from .research import ResearchGroupRequest
-from .collection_point import CollectionPointRequest, CollectionPointListItemResponse
+from .lab_complex import LabComplexRequest, LabComplexResponse
 
 __all__ = [
     "GatewayRequest",
@@ -27,6 +27,6 @@ __all__ = [
     "ResearchListRequest",
     "ResearchListItemResponse",
     "ResearchGroupRequest",
-    "CollectionPointRequest",
-    "CollectionPointListItemResponse"
+    "LabComplexRequest",
+    "LabComplexResponse",
 ]

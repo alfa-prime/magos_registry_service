@@ -30,7 +30,7 @@ class TimetableRequestFunc(BaseModel):
     search_months: float = Field(
         default=settings.TIMETABLE_PERIOD_IN_MONTH,
         ge=0.1,
-        description="На сколько месяцев вперед искать расписание. (0.5 для теста)"
+        description="На сколько месяцев вперед искать расписание. (0.5 для теста)",
     )
 
     model_config = {"populate_by_name": True}
@@ -65,7 +65,7 @@ class TimetableRequestLab(BaseModel):
     search_months: float = Field(
         default=settings.TIMETABLE_PERIOD_IN_MONTH,
         ge=0.1,
-        description="На сколько месяцев вперед искать расписание. (0.5 для теста)"
+        description="На сколько месяцев вперед искать расписание. (0.5 для теста)",
     )
 
     model_config = {"populate_by_name": True}

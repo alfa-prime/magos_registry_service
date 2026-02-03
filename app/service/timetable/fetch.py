@@ -51,9 +51,7 @@ def _group_and_sort_slots(flat_slots: list[dict]) -> dict[str, list[dict]]:
     return result
 
 
-async def _execute_html_request(
-        service: GatewayService, json_body: dict
-) -> list[dict]:
+async def _execute_html_request(service: GatewayService, json_body: dict) -> list[dict]:
     try:
         req_model = GatewayRequest.model_validate(json_body)
         html_content = await service.request_html(json=req_model.model_dump())
@@ -65,12 +63,12 @@ async def _execute_html_request(
 
 
 async def _fetch_loop_generic(
-        service: GatewayService,
-        base_payload: dict,
-        start_date_str: str,
-        controller: str,
-        method: str,
-        chunks: int,
+    service: GatewayService,
+    base_payload: dict,
+    start_date_str: str,
+    controller: str,
+    method: str,
+    chunks: int,
 ) -> dict[str, list[dict]]:
     """
     Универсальный цикл параллельной выгрузки.
@@ -127,7 +125,7 @@ async def _fetch_loop_generic(
 
 
 async def fetch_func_timetable_loop(
-        service: GatewayService, payload: TimetableRequestFunc
+    service: GatewayService, payload: TimetableRequestFunc
 ) -> dict[str, list[dict]]:
     """Расписание для Func (TimetableResource)"""
 
@@ -144,7 +142,7 @@ async def fetch_func_timetable_loop(
 
 
 async def fetch_lab_timetable_loop(
-        service: GatewayService, payload: TimetableRequestLab
+    service: GatewayService, payload: TimetableRequestLab
 ) -> dict[str, list[dict]]:
     """Расписание для Lab (TimetableMedService)"""
 

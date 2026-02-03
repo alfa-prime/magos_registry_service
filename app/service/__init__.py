@@ -8,7 +8,8 @@ from .med_service.med_service import fetch_med_service_list
 from .research.research import fetch_research_list
 from .assist.pay_type import fetch_pay_type_list
 from .assist.patient import fetch_patients_list
-from .assist.colletion_point import fetch_collection_point_list
+from .lab_complex.colletion_point import fetch_collection_point_list
+from .lab_complex.complex_service import fetch_complex_service_list
 
 __all__ = [
     "GatewayService",
@@ -20,4 +21,5 @@ __all__ = [
     "fetch_pay_type_list",
     "fetch_patients_list",
     "fetch_collection_point_list",
+    "fetch_complex_service_list",
 ]

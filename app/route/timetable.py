@@ -27,7 +27,7 @@ router = APIRouter(
     response_model=TimetableResponse,
     summary="Получение расписания для функциональных услуг (рентген, узи, ...)",
     description="Возвращает доступные и занятые слоты для выбранной услуги и ресурса. "
-                "Количество месяцев, за которые будет парситься расписание, указано в .env",
+    "Количество месяцев, за которые будет парситься расписание, указано в .env",
 )
 async def get_full_timetable_func(
     gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
@@ -40,7 +40,7 @@ async def get_full_timetable_func(
                     "StartDay": datetime.now().strftime("%d.%m.%Y"),
                     "Resource_id": "3010101000001297",
                     "UslugaComplexMedService_id": "3010101000045588",
-                    "search_months": 0.5
+                    "search_months": 0.5,
                 },
             },
             "Маммография (полный)": {
@@ -80,7 +80,7 @@ async def get_full_timetable_func(
     response_model=TimetableResponse,
     summary="Получение расписания для лабораторий (анализы)",
     description="Возвращает доступные и занятые слоты для выбранной услуги и ресурса. "
-                "Количество месяцев, за которые будет парситься расписание, указано в .env",
+    "Количество месяцев, за которые будет парситься расписание, указано в .env",
 )
 async def get_full_timetable_lab(
     gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
@@ -93,7 +93,7 @@ async def get_full_timetable_lab(
                     # "Person_id": "3010101002119698",
                     "StartDay": datetime.now().strftime("%d.%m.%Y"),
                     "MedService_id": "3010101000011422",
-                    "search_months": 0.5
+                    "search_months": 0.5,
                 },
             },
             "Биохимия ММЦ (полный)": {

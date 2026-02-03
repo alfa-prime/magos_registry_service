@@ -29,24 +29,16 @@ class ResearchListItemResponse(BaseModel):
     med_service_caption: Optional[str] = Field(
         None, validation_alias="MedService_Caption"
     )
-    med_service_name: Optional[str] = Field(
-        None, validation_alias="MedService_Name"
-    )
-    med_service_nick: Optional[str] = Field(
-        None, validation_alias="MedService_Nick"
-    )
-    med_service_id: Optional[str] = Field(
-        None, validation_alias="MedService_id"
-    )
+    med_service_name: Optional[str] = Field(None, validation_alias="MedService_Name")
+    med_service_nick: Optional[str] = Field(None, validation_alias="MedService_Nick")
+    med_service_id: Optional[str] = Field(None, validation_alias="MedService_id")
     med_service_type_id: Optional[str] = Field(
         None, validation_alias="MedServiceType_id"
     )
     med_service_type_sys_nick: Optional[str] = Field(
         None, validation_alias="MedServiceType_SysNick"
     )
-    usluga_complex_id: Optional[str] = Field(
-        None, validation_alias="UslugaComplex_id"
-    )
+    usluga_complex_id: Optional[str] = Field(None, validation_alias="UslugaComplex_id")
     usluga_complex_med_service_id: Optional[str] = Field(
         None, validation_alias="UslugaComplexMedService_id"
     )
@@ -55,9 +47,7 @@ class ResearchListItemResponse(BaseModel):
     )
     resource_id: Optional[str] = Field(None, validation_alias="Resource_id")
     lpu_unit_id: Optional[str] = Field(None, validation_alias="LpuUnit_id")
-    lpu_section_id: Optional[str] = Field(
-        None, validation_alias="LpuSection_id"
-    )
+    lpu_section_id: Optional[str] = Field(None, validation_alias="LpuSection_id")
     lpu_section_profile_id: Optional[str] = Field(
         None, validation_alias="LpuSectionProfile_id"
     )
