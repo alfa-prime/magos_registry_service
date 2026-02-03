@@ -1,98 +1,126 @@
 from typing import Annotated
 from fastapi import APIRouter, Depends, Body
-import time
-from bs4 import BeautifulSoup
 
-from app.core import get_gateway_service, logger
-from app.service import GatewayService
-from app.model import PatientRequest, PatientFoundItem
-
-router = APIRouter(prefix="/registry", tags=["registry"])
-
-
-def _clean_html_field(raw_html: str | None) -> str | None:
-    if not raw_html:
-        return None
-    text = BeautifulSoup(raw_html, "html.parser").get_text(strip=True)
-    return text if text else None
-
-
-@router.post(
-    path="/patient",
-    response_model=list[PatientFoundItem],
-    summary="Поиск пациента в ЕВМИАС по ФИО и ДР"
+from app.core import check_api_key, get_gateway_service
+from app.model import (
+    MedServiceListResponse,
+    ResearchListRequest,
+    ResearchListItemResponse,
 )
-async def patient_search(
-        gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
-        payload: PatientRequest = Body(..., examples=[{
-            "last_name": "жулидова",
-            "first_name": "елена",
-            "middle_name": "вячеславовна",
-            "birthday": "08.08.1972"
-        }])
+from app.service import (
+    GatewayService,
+    fetch_med_service_list,
+    fetch_research_list,
+)
+
+router = APIRouter(
+    prefix="/registry",
+    tags=["Основные запросы"],
+    dependencies=[Depends(check_api_key)],
+)
+
+
+# ШАГ 1. Получить список служб
+@router.post(
+    path="/get_med_service_list",
+    response_model=list[MedServiceListResponse],
+    summary="Список служб.",
+    description="Возвращает список служб (наименование + id)",
+)
+async def get_service_groups(
+    gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
 ):
-    logger.info("Start search patient")
-    logger.debug(payload)
+    return await fetch_med_service_list(gateway_service)
 
-    response = await gateway_service.request_json(
-        json={
-            "params": {
-                "c": "Person6E",
-                "m": "getPersonGrid",
-                "_dc": int(time.time())
+
+# ШАГ 2. Получить список комплексных уcлуг в службе
+@router.post(
+    path="/get_complete_service",
+    response_model=list[ResearchListItemResponse],
+    summary="Список услуг в определенной службе",
+    description="Возвращает список услуг. Модель ответа зависит от типа услуги (lab/func).",
+)
+async def get_research_groups_list(
+    gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+    payload: ResearchListRequest = Body(
+        ...,
+        openapi_examples={
+            "Biochemistry": {
+                "summary": "Биохимия ММЦ",
+                "description": "",
+                "value": {"group_id": "3010101000006800"},
             },
-            "data": {
-                "start": "0",
-                "limit": "100",
-                "Double_ids": "[]",
-                "Person_Surname": payload.last_name,
-                "Person_Firname": payload.first_name,
-                "Person_Secname": payload.middle_name,
-                "Person_Birthday": payload.birthday,
-                "Org_id": "13103164",
-                "showAll": "1",
-                "dontShowUnknowns": "1",
-                "page": "1",
+            "Mammography": {
+                "summary": "Маммография",
+                "description": "",
+                "value": {"group_id": "3010101000006230"},
+            },
+            "UltraSoundMMC": {
+                "summary": "Кабинет УЗИ стационар ММЦ",
+                "description": "",
+                "value": {"group_id": "3010101000006233"},
+            },
+        },
+    ),
+):
+    return await fetch_research_list(gateway_service, payload)
 
-            }
-        }
-    )
 
-    raw_patients = response.get("data", []) or []
+# ШАГ 3. Получение расписания
 
-    result_items = []
 
-    for patient in raw_patients:
-        raw_s = patient.get("Person_Surname")
-        raw_n = patient.get("Person_Firname")
-        raw_p = patient.get("Person_Secname")
+# ШАГ 3. Получаем список исследований в услуге
+# @router.post("/research_group")
+# async def get_research_group(
+#     gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+#     payload: ResearchGroupRequest,
+# ):
+#     request_data = {
+#         "Lpu_uid": "13102423",
+#         "medServiceComplexOnly": "1",
+#         "level": "0",
+#         "MedService_id": payload.med_service_id,
+#     }
+#
+#     if payload.resource_id:
+#         request_data["Resource_id"] = payload.resource_id
+#
+#     response = await gateway_service.request_json(
+#         json={
+#             "params": {"c": "Usluga", "m": "loadUslugaComplexList"},
+#             "data": request_data,
+#         }
+#     )
+#     return response
 
-        s_title = raw_s.title() if raw_s else ""
-        n_title = raw_n.title() if raw_n else ""
-        p_title = raw_p.title() if raw_p else None
 
-        record = PatientFoundItem(
-            surname=s_title,
-            name=n_title,
-            patronymic=p_title,
-            full_name=" ".join(filter(None, [s_title, n_title, p_title])),
-            birthday=patient.get("Person_Birthday", ""),
-            age=str(patient.get("Person_Age", "")),
-            polis=_clean_html_field(patient.get("Polis_Num")),
-            phone=_clean_html_field(patient.get("Person_Phone")),
-            inn=patient.get("Person_Inn") or None,
-            address_registration=patient.get("Person_PAddress") or None,
-            address_residential=patient.get("Person_UAddress") or None,
-            attach_lpu_name=patient.get("AttachLpu_Name"),
-            lpu_region_name=patient.get("LpuRegion_Name"),
-            ambulat_card_number = patient.get("PersonAmbulatCard_Num") or None,
-            person_id=str(patient.get("Person_id")),
-            person_card_id=str(patient.get("PersonCard_id")) if patient.get("PersonCard_id") else None,
-            server_id=str(patient.get("Server_id")),
-            person_env_id=str(patient.get("PersonEvn_id")),
-            attach_lpu_id=str(patient.get("AttachLpu_id"))
-        )
+# @router.post(
+#     path="/med_service_complex_list",
+#     # response_model=list[MedServiceItemResponse],
+#     summary="Справочник списка услуг в определенной группе",
+#     description="Справочник списка услуг в определенной группе. Возвращает список услуг (наименование и ids)."
+# )
 
-        result_items.append(record)
 
-    return result_items
+# @router.post(
+#     path="/timetable",
+#     summary="Получение расписания для услуги"
+# )
+# async def get_full_timetable(
+#         gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
+#         payload: TimetableRequest = Body(..., examples=[{
+#             "Resource_id": "3010101000001297",  # from service/med_service_group_list
+#             "UslugaComplexMedService_id": "3010101000045588"  # from service/med_service_group_list
+#         }])
+# ) -> dict[str, Any]:
+#     results = await fetch_full_timetable_loop(gateway_service, payload)
+#
+#     # Считаем общее количество слотов для статистики
+#     total_slots = sum(len(day_slots) for day_slots in results.values())
+#
+#     return {
+#         "status": "success",
+#         "total_days": len(results),
+#         "total_slots": total_slots,
+#         "data": results
+#     }

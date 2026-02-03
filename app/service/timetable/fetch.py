@@ -1,11 +1,29 @@
+import asyncio
+import math
 from datetime import datetime, timedelta
 from collections import defaultdict
 
 from app.core import logger
 from app.service import GatewayService
-from app.model import TimetableRequest
+from app.model import TimetableRequestFunc, TimetableRequestLab
 from app.model.gateway_request import GatewayRequest
 from app.service import parse_timetable_html
+
+# --- КОНФИГУРАЦИЯ ---
+DAYS_STEP = 14  # Шаг сетки ЕВМИАС (2 недели)
+
+
+def _calc_chunks(months: float) -> int:
+    """
+    Конвертирует месяцы в количество запросов (чанков).
+    30.5 дней * months / 14 дней.
+    """
+    if months <= 0:
+        return 1
+
+    days = months * 30.5
+    chunks = math.ceil(days / DAYS_STEP)
+    return max(1, chunks)  # Минимум 1 запрос
 
 
 def _group_and_sort_slots(flat_slots: list[dict]) -> dict[str, list[dict]]:
@@ -20,8 +38,7 @@ def _group_and_sort_slots(flat_slots: list[dict]) -> dict[str, list[dict]]:
 
     # Сортируем ключи (даты)
     sorted_dates = sorted(
-        grouped.keys(),
-        key=lambda d: datetime.strptime(d, "%d.%m.%Y")
+        grouped.keys(), key=lambda d: datetime.strptime(d, "%d.%m.%Y")
     )
 
     # Собираем итоговый словарь и сортируем время
@@ -34,62 +51,110 @@ def _group_and_sort_slots(flat_slots: list[dict]) -> dict[str, list[dict]]:
     return result
 
 
-async def fetch_full_timetable_loop(service: GatewayService, payload: TimetableRequest) -> dict[str, list[dict]]:
-    all_slots = []
-    current_start_date_str = payload.start_day
+async def _execute_html_request(
+        service: GatewayService, json_body: dict
+) -> list[dict]:
+    try:
+        req_model = GatewayRequest.model_validate(json_body)
+        html_content = await service.request_html(json=req_model.model_dump())
+        parsed = parse_timetable_html(html_content)
+        return parsed["slots"]
+    except Exception as e:
+        logger.error(f"[TIMETABLE] Ошибка запроса: {e}")
+        return []
 
-    MAX_ITERATIONS = 10 # noqa
-    iteration = 0
 
-    logger.info(f"[TIMETABLE] Старт выгрузки с: {current_start_date_str}")
+async def _fetch_loop_generic(
+        service: GatewayService,
+        base_payload: dict,
+        start_date_str: str,
+        controller: str,
+        method: str,
+        chunks: int,
+) -> dict[str, list[dict]]:
+    """
+    Универсальный цикл параллельной выгрузки.
+    """
+    logger.info(
+        f"[TIMETABLE] Старт выгрузки ({controller}.{method}) на {chunks} чанков с {start_date_str}"
+    )
 
-    while iteration < MAX_ITERATIONS:
-        iteration += 1
+    try:
+        start_dt = datetime.strptime(start_date_str, "%d.%m.%Y")
+    except ValueError:
+        start_dt = datetime.now()
 
-        current_data = payload.model_dump(by_alias=True)
-        current_data["StartDay"] = current_start_date_str
+    tasks = []
+
+    for i in range(chunks):
+        offset_date = start_dt + timedelta(days=i * DAYS_STEP)
+        offset_date_str = offset_date.strftime("%d.%m.%Y")
+
+        # Копируем базовые данные и обновляем дату старта
+        current_data = base_payload.copy()
+        current_data["StartDay"] = offset_date_str
 
         gateway_request_body = {
-            "params": {"c": "TimetableResource", "m": "getTimetableResource"},
-            "data": current_data
+            "params": {"c": controller, "m": method},
+            "data": current_data,
         }
 
-        req_model = GatewayRequest.model_validate(gateway_request_body)
+        tasks.append(_execute_html_request(service, gateway_request_body))
 
-        try:
-            html_content = await service.request_html(json=req_model.model_dump())
-        except Exception as e:
-            logger.error(f"[TIMETABLE] Ошибка HTTP запроса: {e}")
-            break
+    # Запускаем параллельно
+    results_list = await asyncio.gather(*tasks, return_exceptions=True)
 
-        parsed = parse_timetable_html(html_content)
-        slots = parsed["slots"]
-        last_date_str = parsed["last_date"]
+    all_slots = []
+    for result in results_list:
+        if isinstance(result, list):
+            all_slots.extend(result)
+        else:
+            logger.warning(f"[TIMETABLE] Ошибка в потоке: {result}")
 
-        logger.debug(f"[TIMETABLE] Итерация {iteration}: найдено слотов: {len(slots)}")
+    if not all_slots:
+        logger.info("[TIMETABLE] Слоты не найдены.")
+        return {}
 
-        # Если ЕВМИАС вернул сетку, но в ней нет ни одного слота (free или busy),
-        # значит мы ушли за пределы реального расписания.
-        if not slots:
-            logger.info("[TIMETABLE] Слоты не найдены (пустая сетка). Остановка цикла.")
-            break
-
-        all_slots.extend(slots)
-
-        # Если даты в навигации кончились (редкий кейс, но возможен)
-        if not last_date_str:
-            logger.info("[TIMETABLE] Нет дат в навигации. Остановка цикла.")
-            break
-
-        try:
-            last_date_dt = datetime.strptime(last_date_str, "%d.%m.%Y")
-            next_start_dt = last_date_dt + timedelta(days=1)
-            current_start_date_str = next_start_dt.strftime("%d.%m.%Y")
-        except ValueError:
-            break
-
-    # Группировка
     grouped_result = _group_and_sort_slots(all_slots)
 
-    logger.info(f"[TIMETABLE] Выгрузка завершена. Дней: {len(grouped_result)}. Слотов: {len(all_slots)}")
+    logger.info(
+        f"[TIMETABLE] Готово. Дней: {len(grouped_result)}. Слотов: {len(all_slots)}"
+    )
     return grouped_result
+
+
+# === PUBLIC FUNCTIONS ===
+
+
+async def fetch_func_timetable_loop(
+        service: GatewayService, payload: TimetableRequestFunc
+) -> dict[str, list[dict]]:
+    """Расписание для Func (TimetableResource)"""
+
+    chunks_count = _calc_chunks(payload.search_months)
+
+    return await _fetch_loop_generic(
+        service=service,
+        base_payload=payload.model_dump(by_alias=True),
+        start_date_str=payload.start_day,
+        controller="TimetableResource",
+        method="getTimetableResource",
+        chunks=chunks_count,
+    )
+
+
+async def fetch_lab_timetable_loop(
+        service: GatewayService, payload: TimetableRequestLab
+) -> dict[str, list[dict]]:
+    """Расписание для Lab (TimetableMedService)"""
+
+    chunks_count = _calc_chunks(payload.search_months)
+
+    return await _fetch_loop_generic(
+        service=service,
+        base_payload=payload.model_dump(by_alias=True),
+        start_date_str=payload.start_day,
+        controller="TimetableMedService",
+        method="getTimetableMedService",
+        chunks=chunks_count,
+    )

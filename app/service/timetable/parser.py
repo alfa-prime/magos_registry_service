@@ -3,22 +3,54 @@ from typing import Dict, Any
 from bs4 import BeautifulSoup
 
 
+def _extract_qtip_data(qtip_html: str) -> dict:
+    """
+    Парсит содержимое всплывающей подсказки (ext:qtip).
+    Извлекает комментарий (div.ttcomments) и остальной текст.
+    """
+    if not qtip_html:
+        return {"comment": None, "info": None}
+
+    soup = BeautifulSoup(qtip_html, "html.parser")
+
+    # 1. Ищем специфический комментарий (в блоке div class='ttcomments')
+    comment = None
+    comment_div = soup.find("div", class_="ttcomments")
+    if comment_div:
+        # Извлекаем текст, например "САХАР С НАГРУЗКОЙ СУРИКОВА ЕЛЕНА..."
+        comment = comment_div.get_text(separator=" ", strip=True)
+        # Удаляем этот блок из дерева, чтобы он не попал в general info
+        comment_div.decompose()
+
+    # 2. Удаляем жирный заголовок "Свободно" (он нам не нужен в тексте)
+    bold_status = soup.find("b", string="Свободно")
+    if bold_status:
+        bold_status.decompose()
+
+    # 3. Всё остальное — это общая информация (например "По направлению")
+    # get_text соберет оставшийся текст, strip=True уберет лишние пробелы и br
+    info = soup.get_text(separator=" ", strip=True)
+
+    # Если info пустой, ставим None
+    if not info:
+        info = None
+
+    return {"comment": comment, "info": info}
+
+
 def parse_timetable_html(html_content: str) -> Dict[str, Any]:
     soup = BeautifulSoup(html_content, "html.parser")
 
-    # --- 1. Извлекаем ДНИ НЕДЕЛИ из шапки таблицы ---
-    # Структура: <tr class=head><td class="work"><b>ПН</b> 12</td>...</tr>
+    # --- 1. Извлекаем ДНИ НЕДЕЛИ ---
     column_days = []
-    # Ищем строку с классом head, внутри ячейки, внутри тег b
     header_cells = soup.select("tr.head td b")
-
     for b_tag in header_cells:
         column_days.append(b_tag.get_text(strip=True))
 
-    # --- 2. Извлекаем ПОЛНЫЕ ДАТЫ из футера ---
+    # --- 2. Извлекаем ПОЛНЫЕ ДАТЫ ---
     column_dates = []
     footer_links = soup.select("tr.foot td.erlink a")
-    date_pattern = re.compile(r"openDayListTTR\('(\d{2}\.\d{2}\.\d{4})'\)")
+    date_pattern = re.compile(r"openDayList\w+\('(\d{2}\.\d{2}\.\d{4})'\)")
 
     for link in footer_links:
         onclick_val = link.get("onclick", "")
@@ -38,19 +70,14 @@ def parse_timetable_html(html_content: str) -> Dict[str, Any]:
         cells = row.find_all("td", recursive=False)
 
         for idx, cell in enumerate(cells):
-            # Защита от выхода за границы массивов
             if idx >= len(column_dates):
                 break
 
             current_date = column_dates[idx]
-
-            # Берем день недели из массива, который собрали в шаге 1.
-            # Если вдруг структура разъехалась (маловероятно), ставим заглушку.
             current_day = column_days[idx] if idx < len(column_days) else "?"
-
             classes = cell.get("class", [])
 
-            # --- Свободный слот ---
+            # === СВОБОДНЫЙ СЛОТ ===
             if "free" in classes:
                 time_text = cell.get_text(strip=True)
                 if not time_text:
@@ -62,29 +89,39 @@ def parse_timetable_html(html_content: str) -> Dict[str, Any]:
                 if match_id:
                     slot_id = match_id.group(1)
 
-                slots.append({
-                    "date": current_date,
-                    "day": current_day,  # <--- Берем из HTML
-                    "time": time_text,
-                    "status": "free",
-                    "slot_id": slot_id,
-                })
+                # --- ЛОГИКА ПАРСИНГА qtip ---
+                qtip_raw = cell.get("ext:qtip", "")
+                parsed_qtip = _extract_qtip_data(qtip_raw)
 
-            # --- Занятый слот ---
+                slots.append(
+                    {
+                        "date": current_date,
+                        "day": current_day,
+                        "time": time_text,
+                        "status": "free",
+                        "slot_id": slot_id,
+                        "comment": parsed_qtip["comment"],
+                        "info": parsed_qtip["info"],
+                    }
+                )
+
+            # === ЗАНЯТЫЙ СЛОТ ===
             elif any(cls.endswith("_person") for cls in classes):
                 raw_text = cell.get_text(strip=True)
                 time_text = raw_text[:5]
                 qtip_html = cell.get("ext:qtip", "")
 
-                slots.append({
-                    "date": current_date,
-                    "day": current_day,  # <--- Берем из HTML
-                    "time": time_text,
-                    "status": "busy",
-                    "details": qtip_html
-                })
+                slots.append(
+                    {
+                        "date": current_date,
+                        "day": current_day,
+                        "time": time_text,
+                        "status": "busy",
+                        "details": qtip_html,
+                    }
+                )
 
     return {
         "last_date": column_dates[-1] if column_dates else None,
-        "slots": slots
+        "slots": slots,
     }

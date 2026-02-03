@@ -10,7 +10,9 @@ from app.service import GatewayService
 API_KEY_HEADER_SCHEME = APIKeyHeader(name="X-API-KEY", auto_error=False)
 
 
-async def check_api_key(api_key: Optional[str] = Security(API_KEY_HEADER_SCHEME)):
+async def check_api_key(
+    api_key: Optional[str] = Security(API_KEY_HEADER_SCHEME),
+):
     if api_key and api_key == settings.GATEWAY_API_KEY:
         return api_key
 

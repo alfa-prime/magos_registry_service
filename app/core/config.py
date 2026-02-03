@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     LOGS_LEVEL: str = "INFO"
     DEBUG_HTTP: bool
 
+    TIMETABLE_PERIOD_IN_MONTH: float = 2.0
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

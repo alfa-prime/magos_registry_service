@@ -1,5 +1,5 @@
 import httpx
-from typing import Union
+from typing import Union, Any
 from app.core import settings
 from app.core.decorators import log_and_catch
 
@@ -28,7 +28,9 @@ class GatewayService:
             return response.json() if response.content else {}
         return response.text
 
-    async def request_json(self, method: str = "POST", **kwargs) -> dict:
+    async def request_json(
+        self, method: str = "POST", **kwargs
+    ) -> list[dict[str, Any]] | dict[str, Any]:
         """
         Выполняет запрос к JSON-эндпоинту.
         """

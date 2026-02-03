@@ -2,12 +2,11 @@ from app.model import ResearchListRequest
 from app.service import GatewayService
 
 
-async def fetch_research_list(service: GatewayService, payload: ResearchListRequest):
+async def fetch_research_list(
+    service: GatewayService, payload: ResearchListRequest
+):
     json = {
-        "params": {
-            "c": "Reg",
-            "m": "getDirectionMedServiceList"
-        },
+        "params": {"c": "Reg", "m": "getDirectionMedServiceList"},
         "data": {
             "MedService_id": payload.group_id,
             "object": "MedService",
@@ -25,7 +24,7 @@ async def fetch_research_list(service: GatewayService, payload: ResearchListRequ
             "isSecondRead": "false",
             "isOnlyPolka": "0",
             "groupByMedService": "1",
-        }
+        },
     }
     response = await service.request_json(json=json)
     data = response if isinstance(response, list) else response.get("data", [])
@@ -33,9 +32,6 @@ async def fetch_research_list(service: GatewayService, payload: ResearchListRequ
     for item in data:
         item["group_id"] = payload.group_id
 
-    data = sorted(
-        data,
-        key=lambda x: x.get("UslugaComplex_Name") or ""
-    )
+    data = sorted(data, key=lambda x: x.get("UslugaComplex_Name") or "")
 
     return data

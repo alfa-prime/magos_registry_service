@@ -7,7 +7,9 @@ from app.service import GatewayService
 from app.model import GatewayRequest
 
 router = APIRouter(
-    prefix="/health", tags=["Проверка здоровья"], dependencies=[Depends(check_api_key)]
+    prefix="/health",
+    tags=["Проверка здоровья"],
+    dependencies=[Depends(check_api_key)],
 )
 
 
@@ -49,6 +51,8 @@ async def get_timetable_html(
     }
 
     request_model = GatewayRequest.model_validate(payload_data)
-    content = await gateway_service.request_html(json=request_model.model_dump())
+    content = await gateway_service.request_html(
+        json=request_model.model_dump()
+    )
 
-    return HTMLResponse(content = content)
+    return HTMLResponse(content=content)

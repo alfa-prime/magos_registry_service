@@ -1,21 +1,24 @@
 from .gateway_request import GatewayRequest
-from .timetable import TimetableRequest
-from .patinet import (
-    PatientRequest,
-    PatientFoundItem,
-    PatientSearchResponse
+from .timetable import (
+    TimetableRequestFunc,
+    TimetableRequestLab,
+    TimetableResponse,
 )
+from .patinet import PatientRequest, PatientFoundItem, PatientSearchResponse
 from .paytype import PayTypeResponse
 from .med_service import (
     MedServiceListResponse,
     ResearchListRequest,
-    ResearchListItemResponse
+    ResearchListItemResponse,
 )
 from .research import ResearchGroupRequest
+from .collection_point import CollectionPointRequest, CollectionPointListItemResponse
 
 __all__ = [
     "GatewayRequest",
-    "TimetableRequest",
+    "TimetableRequestFunc",
+    "TimetableRequestLab",
+    "TimetableResponse",
     "PatientRequest",
     "PatientFoundItem",
     "PatientSearchResponse",
@@ -23,5 +26,7 @@ __all__ = [
     "MedServiceListResponse",
     "ResearchListRequest",
     "ResearchListItemResponse",
-    "ResearchGroupRequest"
+    "ResearchGroupRequest",
+    "CollectionPointRequest",
+    "CollectionPointListItemResponse"
 ]
