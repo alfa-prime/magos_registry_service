@@ -12,7 +12,8 @@ class Settings(BaseSettings):
     REQUEST_TIMEOUT: float = 30.0
 
     LOGS_LEVEL: str = "INFO"
-    DEBUG_HTTP: bool
+    DEBUG_ROUTE: bool = True
+    DEBUG_HTTP: bool = True
 
     TIMETABLE_PERIOD_IN_MONTH: float = 2.0
 

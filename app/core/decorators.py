@@ -6,8 +6,9 @@ from typing import Any, Awaitable, Callable, Dict, ParamSpec, Type, TypeVar
 import httpx
 from fastapi import HTTPException, Request, status
 
+from app.core.logger_config import logger
 from app.core import settings
-from app.core import logger
+
 
 P = ParamSpec("P")
 R = TypeVar("R")
@@ -17,7 +18,6 @@ def log_and_catch(
     debug: bool = settings.DEBUG_HTTP,
 ) -> Callable[[Callable[P, Awaitable[R]]], Callable[P, Awaitable[R]]]:
     """Декоратор для логирования и перехвата ошибок в асинхронных HTTP-функциях (и не только).
-
     Логирует начало и конец выполнения функции, параметры и ошибки (если есть).
     Применяется в HTTPXClient и может применяться в других сервисах.
 
@@ -298,9 +298,7 @@ def route_handler(
                     )
 
                 # Пробрасываем ошибку с соответствующим статус-кодом
-                status_code = effective_errors.get(
-                    type(e), status.HTTP_500_INTERNAL_SERVER_ERROR
-                )
+                status_code = effective_errors.get(type(e), status.HTTP_500_INTERNAL_SERVER_ERROR)
                 raise HTTPException(status_code=status_code, detail=str(e))
 
         return wrapper

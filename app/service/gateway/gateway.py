@@ -8,7 +8,7 @@ class GatewayService:
     def __init__(self, client: httpx.AsyncClient):
         self._client = client
 
-    @log_and_catch()
+    @log_and_catch(debug=settings.DEBUG_HTTP)
     async def _base_request(
         self, method: str, url: str, is_json_response: bool, **kwargs
     ) -> Union[dict, str]:

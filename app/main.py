@@ -2,8 +2,10 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.logger_config import logger
 from app.core import settings, init_gateway_client, shutdown_gateway_client
 from app.route import router
+
 
 tags_metadata = []
 

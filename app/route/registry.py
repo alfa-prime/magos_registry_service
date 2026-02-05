@@ -42,7 +42,7 @@ async def get_service_groups(
 @router.post(
     path="/get_complete_service",
     response_model=list[ResearchListItemResponse],
-    summary="Список услуг в определенной службе",
+    summary="Список услуг в службе",
     description="Возвращает список услуг. Модель ответа зависит от типа услуги (lab/func).",
 )
 async def get_research_groups_list(
@@ -88,11 +88,19 @@ async def get_lab_complex_details(
                     "med_service_id": "3010101000006800",
                     "usluga_complex_id": "206894",
                     "usluga_complex_med_service_id": "3010101000053307",
+                    "med_service_type_sys_nick": "lab"
                 },
             }
         },
     ),
 ) -> Any:
+
+    if payload.med_service_type_sys_nick != "lab":
+        return {
+            "collection_points": [],
+            "services_in_service": [],
+        }
+
     collection_points_task = fetch_collection_point_list(gateway_service, payload)
     complex_services_task = fetch_complex_service_list(gateway_service, payload)
 

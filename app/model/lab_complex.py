@@ -13,6 +13,9 @@ class LabComplexRequest(BaseModel):
     usluga_complex_med_service_id: str = Field(
         ..., description="ID связки услуги и службы (UslugaComplexMedService_id)"
     )
+    med_service_type_sys_nick: str = Field(
+        ..., description="Тип медицинской услуги (sys_nick). Ожидается 'lab'."
+    )
 
     model_config = {"extra": "ignore"}
 

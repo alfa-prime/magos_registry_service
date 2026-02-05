@@ -6,7 +6,7 @@ from loguru import logger
 from app.core.config import settings
 
 
-def configure_logger(log_level: str = "INFO"):
+def configure_logger(log_level: str = "DEBUG"):
     """Настраивает loguru для логирования приложения. Вызывается при импорте модуля."""
     # Очистка стандартных хендлеров logging
     root_logger = logging.getLogger()
@@ -40,7 +40,6 @@ def configure_logger(log_level: str = "INFO"):
         compression="zip",
     )
 
-    # Перехват логов FastAPI
     class InterceptHandler(logging.Handler):
         def emit(self, record):
             level = (
@@ -57,3 +56,4 @@ def configure_logger(log_level: str = "INFO"):
 
 
 configure_logger(settings.LOGS_LEVEL)
+
