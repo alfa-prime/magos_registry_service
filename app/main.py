@@ -2,10 +2,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.core.logger_config import logger
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.core.middleware import RequestLoggingMiddleware
+from app.core.exceptions import http_exception_handler, validation_exception_handler
+
 from app.core import settings, init_gateway_client, shutdown_gateway_client
 from app.route import router
-
 
 tags_metadata = []
 
@@ -26,6 +30,10 @@ app = FastAPI(
     swagger_ui_parameters={"persistAuthorization": True},
 )
 
+app.add_exception_handler(StarletteHTTPException, http_exception_handler)
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+
+app.add_middleware(RequestLoggingMiddleware)  # noqa
 app.add_middleware(
     CORSMiddleware,  # noqa
     allow_origins=["*"],

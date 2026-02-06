@@ -52,13 +52,14 @@ def _group_and_sort_slots(flat_slots: list[dict]) -> dict[str, list[dict]]:
 
 
 async def _execute_html_request(service: GatewayService, json_body: dict) -> list[dict]:
+    req_model = GatewayRequest.model_validate(json_body)
+    html_content = await service.request_html(json=req_model.model_dump())
+
     try:
-        req_model = GatewayRequest.model_validate(json_body)
-        html_content = await service.request_html(json=req_model.model_dump())
         parsed = parse_timetable_html(html_content)
         return parsed["slots"]
     except Exception as e:
-        logger.error(f"[TIMETABLE] Ошибка запроса: {e}")
+        logger.error(f"[TIMETABLE] Ошибка парсинга чанка: {e}")
         return []
 
 
@@ -103,11 +104,17 @@ async def _fetch_loop_generic(
     results_list = await asyncio.gather(*tasks, return_exceptions=True)
 
     all_slots = []
+    errors = []
+
     for result in results_list:
         if isinstance(result, list):
             all_slots.extend(result)
-        else:
-            logger.warning(f"[TIMETABLE] Ошибка в потоке: {result}")
+        elif isinstance(result, Exception):
+            errors.append(result)
+            logger.warning(f"[TIMETABLE] Ошибка в одном из потоков: {result}")
+
+    if not all_slots and errors:
+        raise errors[0]
 
     if not all_slots:
         logger.info("[TIMETABLE] Слоты не найдены.")

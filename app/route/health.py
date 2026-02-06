@@ -1,11 +1,10 @@
 from typing import Annotated
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
 
-from app.core import check_api_key, get_gateway_service, settings
+from app.core import check_api_key, get_gateway_service
 from app.service import GatewayService
 from app.model import GatewayRequest
-from app.core.decorators import route_handler
 
 router = APIRouter(
     prefix="/health",
@@ -19,16 +18,13 @@ router = APIRouter(
     summary="Стандартная проверка работоспособности",
     description="Возвращает 'pong', если сервис запущен и отвечает на запросы.",
 )
-@route_handler(debug=settings.DEBUG_ROUTE)
 async def check():
     return {"ping": "pong"}
 
 
 @router.post("/check-json")
-@route_handler(debug=settings.DEBUG_ROUTE)
 async def check_gateway_json(
         gateway_service: Annotated[GatewayService, Depends(get_gateway_service)],
-        request: Request
 ):
     response = await gateway_service.request_json(
         json={"params": {"c": "Common", "m": "getCurrentDateTime"}}
